@@ -1,0 +1,607 @@
+/* Modern Professional Styles for Staff Management System */
+/* Brand Colors: Dark grey #222222, Gold #f9c900, Dark blue #2a6491, Light blue #2a96c6 */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+/* CSS Custom Properties for Brand Colors */
+:root {
+  --primary-dark-grey: #222222;
+  --primary-gold: #f9c900;
+  --secondary-dark-blue: #2a6491;
+  --secondary-light-blue: #2a96c6;
+  --light-grey: #f8f9fa;
+  --border-light: #e9ecef;
+  --text-muted: #6c757d;
+  --white: #ffffff;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Global Typography */
+body {
+  font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--primary-dark-grey);
+  background-color: #fafafa;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--primary-dark-grey);
+}
+
+/* Sticky Footer Layout */
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1 0 auto;
+}
+
+footer {
+  flex-shrink: 0;
+}
+
+/* Navigation Styling */
+.navbar {
+  background-color: var(--primary-dark-grey) !important;
+  box-shadow: var(--shadow);
+  border-bottom: 3px solid var(--primary-gold);
+  padding: 1rem 0;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--white) !important;
+}
+
+.navbar-brand i {
+  color: var(--primary-gold);
+  margin-right: 0.5rem;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500;
+  margin: 0 0.25rem;
+  padding: 0.5rem 1rem !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-gold) !important;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-nav .nav-link.active {
+  background-color: var(--primary-gold);
+  color: var(--primary-dark-grey) !important;
+  font-weight: 600;
+}
+
+.navbar-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500;
+}
+
+/* Admin Navigation - Different accent */
+.navbar.bg-danger {
+  background-color: var(--secondary-dark-blue) !important;
+  border-bottom-color: var(--primary-gold);
+}
+
+/* Card Styling */
+.card {
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+  background-color: var(--white);
+  transition: all 0.3s ease;
+}
+
+
+.card-header {
+  background-color: var(--white);
+  border-bottom: 2px solid var(--border-light);
+  border-radius: 12px 12px 0 0 !important;
+  padding: 1.25rem 1.5rem;
+}
+
+.card-header h5, .card-header h6 {
+  margin-bottom: 0;
+  color: var(--primary-dark-grey);
+  font-weight: 600;
+}
+
+.card-header i {
+  color: var(--secondary-dark-blue);
+  margin-right: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Special Card Variations */
+.card.border-primary {
+  border-color: var(--secondary-light-blue);
+  border-width: 2px;
+}
+
+.card.border-warning {
+  border-color: var(--primary-gold);
+  border-width: 2px;
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--secondary-dark-blue);
+  border-color: var(--secondary-dark-blue);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--secondary-light-blue);
+  border-color: var(--secondary-light-blue);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-warning {
+  background-color: var(--primary-gold);
+  border-color: var(--primary-gold);
+  color: var(--primary-dark-grey);
+  font-weight: 600;
+}
+
+.btn-warning:hover, .btn-warning:focus {
+  background-color: #e6b500;
+  border-color: #e6b500;
+  color: var(--primary-dark-grey);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-info {
+  background-color: var(--secondary-light-blue);
+  border-color: var(--secondary-light-blue);
+}
+
+.btn-outline-primary {
+  color: var(--secondary-dark-blue);
+  border-color: var(--secondary-dark-blue);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--secondary-dark-blue);
+  border-color: var(--secondary-dark-blue);
+}
+
+/* Table Styling */
+.table {
+  background-color: var(--white);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-responsive {
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+}
+
+.table th {
+  background-color: var(--primary-dark-grey);
+  color: var(--white);
+  border: none;
+  font-weight: 600;
+  padding: 1rem;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  padding: 1rem;
+  border-color: var(--border-light);
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Badge Styling */
+.badge {
+  font-size: 0.75em;
+  font-weight: 500;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+}
+
+.badge.bg-primary {
+  background-color: var(--secondary-dark-blue) !important;
+}
+
+.badge.bg-success {
+  background-color: var(--success) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--primary-gold) !important;
+  color: var(--primary-dark-grey) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--danger) !important;
+}
+
+/* Alert Styling */
+.alert {
+  border: none;
+  border-left: 4px solid;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.alert-info {
+  background-color: #e8f4f8;
+  border-left-color: var(--secondary-light-blue);
+  color: var(--secondary-dark-blue);
+}
+
+.alert-success {
+  background-color: #e8f5e8;
+  border-left-color: var(--success);
+  color: #155724;
+}
+
+.alert-warning {
+  background-color: #fff8e1;
+  border-left-color: var(--primary-gold);
+  color: var(--primary-dark-grey);
+}
+
+.alert-danger {
+  background-color: #f8e8e8;
+  border-left-color: var(--danger);
+  color: #721c24;
+}
+
+/* Form Styling */
+.form-control, .form-select {
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background-color: var(--white);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--secondary-light-blue);
+  box-shadow: 0 0 0 0.2rem rgba(42, 150, 198, 0.25);
+  background-color: var(--white);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--primary-dark-grey);
+  margin-bottom: 0.5rem;
+}
+
+/* Stats Cards */
+.card.bg-primary {
+  background: linear-gradient(135deg, var(--secondary-dark-blue), var(--secondary-light-blue)) !important;
+  border: none;
+}
+
+.card.bg-success {
+  background: linear-gradient(135deg, var(--success), #20c997) !important;
+  border: none;
+}
+
+.card.bg-warning {
+  background: linear-gradient(135deg, var(--primary-gold), #ffdd57) !important;
+  border: none;
+}
+
+.card.bg-danger {
+  background: linear-gradient(135deg, var(--danger), #e74c3c) !important;
+  border: none;
+}
+
+/* Directory Specific Styles */
+.directory-section {
+  margin-bottom: 2rem;
+  page-break-inside: avoid;
+}
+
+.directory-title {
+  background: linear-gradient(135deg, var(--primary-dark-grey), #333333);
+  color: var(--white);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.dept-listing, .staff-listing {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.2s ease;
+}
+
+.dept-listing:hover, .staff-listing:hover {
+  background-color: #f8f9fa;
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+  padding-right: 0.5rem;
+  margin-right: -0.5rem;
+  border-radius: 6px;
+}
+
+.dept-listing:last-child, .staff-listing:last-child {
+  border-bottom: none;
+}
+
+.dept-header {
+  font-weight: 700;
+  color: var(--secondary-dark-blue);
+  text-transform: uppercase;
+  margin: 1.5rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid var(--primary-gold);
+  letter-spacing: 0.5px;
+}
+
+.phone-number {
+  font-family: 'Source Sans 3', monospace;
+  text-align: right;
+  font-weight: 600;
+  color: var(--secondary-dark-blue);
+}
+
+.staff-name {
+  font-weight: 600;
+  color: var(--primary-dark-grey);
+}
+
+.staff-title {
+  color: var(--text-muted);
+  font-style: normal;
+  font-size: 0.9em;
+}
+
+/* View Toggle */
+.view-toggle {
+  background: var(--white);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow);
+}
+
+/* Staff Entry Forms */
+.staff-entry {
+  background-color: #fafafa;
+  border: 2px solid var(--border-light) !important;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.staff-entry:hover {
+  background-color: #f0f0f0;
+  border-color: var(--secondary-light-blue) !important;
+}
+
+/* Footer Styling */
+footer {
+  background-color: var(--primary-dark-grey) !important;
+  color: rgba(255, 255, 255, 0.8);
+  border-top: 3px solid var(--primary-gold);
+}
+
+footer h6 {
+  color: var(--white);
+  font-weight: 600;
+}
+
+footer .text-light {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+footer .text-light:hover {
+  color: var(--primary-gold) !important;
+}
+
+/* Extension Input Styling */
+.extension-input {
+  font-family: 'Source Sans 3', monospace;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+/* Loading States */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Department Cards Enhancement */
+.department-card {
+  transition: all 0.3s ease;
+  border: 2px solid var(--border-light);
+}
+
+.department-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--secondary-light-blue);
+}
+
+/* Button Groups */
+.btn-group .btn {
+  border-radius: 6px !important;
+  margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Enhanced spacing and layout */
+.container {
+  max-width: 1200px;
+}
+
+.mt-4 {
+  margin-top: 2rem !important;
+}
+
+.mb-4 {
+  margin-bottom: 2rem !important;
+}
+
+/* Professional text colors */
+.text-primary {
+  color: var(--secondary-dark-blue) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Print Styles */
+@media print {
+  .no-print { 
+    display: none !important; 
+  }
+  body { 
+    font-size: 12px;
+    background-color: white !important;
+  }
+  .container { 
+    max-width: none; 
+  }
+  .navbar {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .dept-listing,
+  .staff-listing {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .phone-number {
+    text-align: left;
+  }
+  
+  .view-toggle .row {
+    gap: 1rem;
+  }
+  
+  .navbar-nav {
+    padding-top: 1rem;
+  }
+  
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1rem !important;
+    margin: 0.25rem 0;
+  }
+}
+
+/* Accessibility improvements */
+.btn:focus, .form-control:focus, .form-select:focus {
+  outline: 2px solid var(--primary-gold);
+  outline-offset: 2px;
+}
+
+/* Smooth animations */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Professional spacing for lists */
+.list-group-item {
+  border-color: var(--border-light);
+  background-color: var(--white);
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Enhanced form styling */
+.form-check-input:checked {
+  background-color: var(--secondary-dark-blue);
+  border-color: var(--secondary-dark-blue);
+}
+
+/* Professional table alternating rows */
+.table-striped > tbody > tr:nth-of-type(odd) > td {
+  background-color: rgba(42, 150, 198, 0.05);
+}
+
+/* Status indicators */
+.text-success {
+  color: var(--success) !important;
+}
+
+.text-warning {
+  color: #856404 !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+.mb-3 {margin-bottom:7px!important;}
