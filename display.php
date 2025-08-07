@@ -5,46 +5,71 @@ require_once 'config.php';
 // Get department parameter
 $department = isset($_GET['dept']) ? $_GET['dept'] : '';
 
-$database = new Database();
-$db = $database->getConnection();
+$cacheKey = 'display_directory_data';
+$cacheFile = __DIR__ . '/cache/display_cache.json';
+$cacheTTL = 900; // 15 minutes
 
-// Check if database connection exists
-if (!$db) {
-    die('Database connection failed');
+$cachedData = false;
+if (function_exists('apcu_fetch')) {
+    $cachedData = apcu_fetch($cacheKey);
+}
+if ($cachedData === false && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTTL) {
+    $cachedData = json_decode(file_get_contents($cacheFile), true);
 }
 
-if ($department) {
-    $query = "SELECT s.*, d.department_name as department FROM staff s 
-              JOIN departments d ON s.department_id = d.id 
-              WHERE d.department_name = ? 
-              ORDER BY s.name";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$department]);
+if ($cachedData !== false && is_array($cachedData)) {
+    $staff_list = $cachedData['staff_list'];
+    $departments = $cachedData['departments'];
+    $dept_directory = $cachedData['dept_directory'];
 } else {
-    $query = "SELECT s.*, d.department_name as department FROM staff s 
-              JOIN departments d ON s.department_id = d.id 
+    $database = new Database();
+    $db = $database->getConnection();
+
+    if (!$db) {
+        die('Database connection failed');
+    }
+
+    $query = "SELECT s.*, d.department_name as department FROM staff s
+              JOIN departments d ON s.department_id = d.id
               ORDER BY d.department_name, s.name";
     $stmt = $db->prepare($query);
     $stmt->execute();
+    $staff_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $dept_query = "SELECT d.department_name, d.extension, d.building, d.room_number
+                   FROM departments d
+                   ORDER BY d.department_name";
+    $dept_stmt = $db->prepare($dept_query);
+    $dept_stmt->execute();
+    $departments = $dept_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $dept_directory = [];
+    foreach ($departments as $dept) {
+        $dept_directory[$dept['department_name']] = $dept;
+    }
+
+    $dataToCache = [
+        'staff_list' => $staff_list,
+        'departments' => $departments,
+        'dept_directory' => $dept_directory
+    ];
+
+    if (function_exists('apcu_store')) {
+        apcu_store($cacheKey, $dataToCache, $cacheTTL);
+    } else {
+        if (!is_dir(dirname($cacheFile))) {
+            mkdir(dirname($cacheFile), 0755, true);
+        }
+        file_put_contents($cacheFile, json_encode($dataToCache));
+    }
 }
 
-$staff_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Get ALL departments for filter and department directory (including those without staff)
-$dept_query = "SELECT d.department_name, d.extension, d.building, d.room_number 
-               FROM departments d 
-               ORDER BY d.department_name";
-$dept_stmt = $db->prepare($dept_query);
-$dept_stmt->execute();
-$departments = $dept_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Create department directory
-$dept_directory = [];
-foreach ($departments as $dept) {
-    $dept_directory[$dept['department_name']] = $dept;
+if ($department) {
+    $staff_list = array_filter($staff_list, function ($staff) use ($department) {
+        return $staff['department'] === $department;
+    });
 }
 
-// Group staff by department for department/staff listing
 $staff_by_dept = [];
 foreach ($staff_list as $staff) {
     $staff_by_dept[$staff['department']][] = $staff;
