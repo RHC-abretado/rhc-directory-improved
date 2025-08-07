@@ -26,7 +26,7 @@ $show_public = $show_public ?? false; // For public pages like display.php
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <!-- Custom Styles -->
-    <link href="style.css" rel="stylesheet">
+    <link href="style.min.css" rel="stylesheet">
 </head>
 <body>
     <?php if (!$show_public): ?>
