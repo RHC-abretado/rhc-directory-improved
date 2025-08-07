@@ -1,5 +1,10 @@
 <?php
 // auth.php - Enhanced Authentication functions with roles
+session_set_cookie_params([
+    'httponly' => true,
+    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'samesite' => 'Strict'
+]);
 session_start();
 require_once 'config.php';
 
@@ -88,6 +93,7 @@ function login($username, $password) {
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (password_verify($password, $row['password'])) {
+            session_regenerate_id(true);
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
             $_SESSION['role'] = $row['role'];
