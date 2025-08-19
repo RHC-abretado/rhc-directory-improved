@@ -44,6 +44,7 @@ class DatabaseDirectory {
                 s.email,
                 s.room_number,
                 s.building,
+                s.is_department_head,
                 d.department_name,
                 d.extension as dept_extension,
                 d.building as dept_building,
@@ -79,7 +80,7 @@ class DatabaseDirectory {
         }
         
         // Always order by department, then name for consistent results
-        $sql .= " ORDER BY d.department_name, s.name";
+        $sql .= " ORDER BY d.department_name, s.is_department_head DESC, s.name";
         
         // Add limit for large datasets
         if (isset($filters['limit'])) {
@@ -428,7 +429,7 @@ class DatabaseDirectory {
             $deptMap[$row['department_name']] = $row['id'];
         }
         
-        $sql = "INSERT INTO staff (department_id, user_id, name, title, extension, phone, email, room_number, building, display_name, company_name) VALUES ";
+        $sql = "INSERT INTO staff (department_id, user_id, name, title, extension, phone, email, room_number, building, is_department_head, display_name, company_name) VALUES ";
         $values = [];
         $params = [];
         
@@ -436,7 +437,7 @@ class DatabaseDirectory {
             $deptId = $deptMap[$staff['department']] ?? null;
             if (!$deptId) continue; // Skip if department not found
             
-            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $params[] = $deptId;
             $params[] = $staff['user_id'];
             $params[] = $staff['name'];
@@ -446,6 +447,7 @@ class DatabaseDirectory {
             $params[] = $staff['email'];
             $params[] = $staff['room_number'];
             $params[] = $staff['building'];
+            $params[] = !empty($staff['is_department_head']) ? 1 : 0;
             $params[] = $staff['display_name'];
             $params[] = $staff['company_name'];
         }

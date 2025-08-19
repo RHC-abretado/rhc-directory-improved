@@ -51,19 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("You don't have permission to manage this department.");
         }
         
-        $query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number) 
-                  VALUES (:user_id, :department_id, :name, :title, :extension, :room_number)";
+        $query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number, is_department_head)
+                  VALUES (:user_id, :department_id, :name, :title, :extension, :room_number, :is_department_head)";
         $stmt = $db->prepare($query);
         
         $added_count = 0;
         foreach ($_POST['staff'] as $staff_member) {
             if (!empty($staff_member['name']) && !empty($staff_member['title'])) {
-                $stmt->bindParam(':user_id', $_SESSION['user_id']);
-                $stmt->bindParam(':department_id', $_POST['department_id']);
-                $stmt->bindParam(':name', $staff_member['name']);
-                $stmt->bindParam(':title', $staff_member['title']);
-                $stmt->bindParam(':extension', $staff_member['extension']);
-                $stmt->bindParam(':room_number', $staff_member['room_number']);
+                $stmt->bindValue(':user_id', $_SESSION['user_id']);
+                $stmt->bindValue(':department_id', $_POST['department_id']);
+                $stmt->bindValue(':name', $staff_member['name']);
+                $stmt->bindValue(':title', $staff_member['title']);
+                $stmt->bindValue(':extension', $staff_member['extension']);
+                $stmt->bindValue(':room_number', $staff_member['room_number']);
+                $stmt->bindValue(':is_department_head', !empty($staff_member['is_department_head']) ? 1 : 0, PDO::PARAM_INT);
                 $stmt->execute();
                 $added_count++;
             }
@@ -194,6 +195,12 @@ include 'header.php';
                                                 <input type="text" class="form-control" name="staff[0][room_number]" placeholder="A101">
                                             </div>
                                         </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" name="staff[0][is_department_head]" value="1">
+                                                <label class="form-check-label">Dean/Director</label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -271,6 +278,12 @@ function addStaffEntry() {
                 <div class="mb-3">
                     <label class="form-label">Room Number</label>
                     <input type="text" class="form-control" name="staff[${staffCounter}][room_number]" placeholder="A101">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="staff[${staffCounter}][is_department_head]" value="1">
+                    <label class="form-check-label">Dean/Director</label>
                 </div>
             </div>
         </div>

@@ -27,10 +27,10 @@ $placeholders = str_repeat('?,', count($dept_ids) - 1) . '?';
 
 $query = "SELECT s.name, s.title, s.extension, s.room_number, s.created_at,
           d.department_name
-          FROM staff s 
-          JOIN departments d ON s.department_id = d.id 
+          FROM staff s
+          JOIN departments d ON s.department_id = d.id
           WHERE s.department_id IN ($placeholders)
-          ORDER BY d.department_name, s.name";
+          ORDER BY d.department_name, s.is_department_head DESC, s.name";
 $stmt = $db->prepare($query);
 $stmt->execute($dept_ids);
 

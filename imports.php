@@ -307,8 +307,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             }
                         } else {
                             // Insert new staff member
-                            $insert_query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number)
-                                            VALUES (:user_id, :dept_id, :name, :title, :extension, :room_number)";
+                            $insert_query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number, is_department_head)
+                                            VALUES (:user_id, :dept_id, :name, :title, :extension, :room_number, :is_department_head)";
                             $insert_stmt = $db->prepare($insert_query);
                             $insert_stmt->bindParam(':user_id', $_SESSION['user_id']);
                             $insert_stmt->bindParam(':dept_id', $department_id);
@@ -316,6 +316,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $insert_stmt->bindParam(':title', $staff['title']);
                             $insert_stmt->bindParam(':extension', $staff['extension']);
                             $insert_stmt->bindParam(':room_number', $staff['room_number']);
+                            $is_head = isset($staff['is_department_head']) ? $staff['is_department_head'] : 0;
+                            $insert_stmt->bindValue(':is_department_head', $is_head, PDO::PARAM_INT);
                             $insert_stmt->execute();
                             $imported_count++;
                         }
