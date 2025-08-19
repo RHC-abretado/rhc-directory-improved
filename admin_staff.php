@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (isset($_POST['create_staff'])) {
             // Create new staff member
-            $query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number) 
-                      VALUES (:user_id, :department_id, :name, :title, :extension, :room_number)";
+            $query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number, is_department_head)
+                      VALUES (:user_id, :department_id, :name, :title, :extension, :room_number, :is_department_head)";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':user_id', $_SESSION['user_id']);
             $stmt->bindParam(':department_id', $_POST['department_id']);
@@ -35,18 +35,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindParam(':title', $_POST['title']);
             $stmt->bindParam(':extension', $_POST['extension']);
             $stmt->bindParam(':room_number', $_POST['room_number']);
+            $is_head = isset($_POST['is_department_head']) ? 1 : 0;
+            $stmt->bindParam(':is_department_head', $is_head, PDO::PARAM_INT);
             $stmt->execute();
             
             $success = "Staff member created successfully!";
             
         } elseif (isset($_POST['update_staff'])) {
             // Update existing staff member
-            $query = "UPDATE staff SET 
+            $query = "UPDATE staff SET
                       department_id = :department_id,
                       name = :name,
                       title = :title,
                       extension = :extension,
                       room_number = :room_number,
+                      is_department_head = :is_department_head,
                       updated_at = CURRENT_TIMESTAMP
                       WHERE id = :staff_id";
             $stmt = $db->prepare($query);
@@ -55,6 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindParam(':title', $_POST['title']);
             $stmt->bindParam(':extension', $_POST['extension']);
             $stmt->bindParam(':room_number', $_POST['room_number']);
+            $is_head = isset($_POST['is_department_head']) ? 1 : 0;
+            $stmt->bindParam(':is_department_head', $is_head, PDO::PARAM_INT);
             $stmt->bindParam(':staff_id', $_POST['staff_id']);
             $stmt->execute();
             
@@ -128,7 +133,7 @@ if ($department_filter) {
     $query_params[':department_id'] = $department_filter;
 }
 
-$staff_query .= " ORDER BY d.department_name, s.name";
+$staff_query .= " ORDER BY d.department_name, s.is_department_head DESC, s.name";
 
 $staff_stmt = $db->prepare($staff_query);
 foreach ($query_params as $key => $value) {
@@ -215,9 +220,16 @@ include 'header.php';
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Room Number</label>
-                                            <input type="text" class="form-control" name="room_number" 
-                                                   value="<?php echo $edit_staff ? htmlspecialchars($edit_staff['room_number']) : ''; ?>" 
+                                            <input type="text" class="form-control" name="room_number"
+                                                   value="<?php echo $edit_staff ? htmlspecialchars($edit_staff['room_number']) : ''; ?>"
                                                    placeholder="A101">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" name="is_department_head" value="1"
+                                                   <?php echo $edit_staff && $edit_staff['is_department_head'] ? 'checked' : ''; ?>>
+                                            <label class="form-check-label">Dean/Director</label>
                                         </div>
                                     </div>
                                 </div>

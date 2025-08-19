@@ -31,16 +31,16 @@ if (!$db) {
 
 // Get staff data
 if ($department) {
-    $query = "SELECT s.*, d.department_name as department FROM staff s 
-              JOIN departments d ON s.department_id = d.id 
-              WHERE d.department_name = ? 
-              ORDER BY s.name";
+    $query = "SELECT s.*, d.department_name as department FROM staff s
+              JOIN departments d ON s.department_id = d.id
+              WHERE d.department_name = ?
+              ORDER BY s.is_department_head DESC, s.name";
     $stmt = $db->prepare($query);
     $stmt->execute([$department]);
 } else {
-    $query = "SELECT s.*, d.department_name as department FROM staff s 
-              JOIN departments d ON s.department_id = d.id 
-              ORDER BY d.department_name, s.name";
+    $query = "SELECT s.*, d.department_name as department FROM staff s
+              JOIN departments d ON s.department_id = d.id
+              ORDER BY d.department_name, s.is_department_head DESC, s.name";
     $stmt = $db->prepare($query);
     $stmt->execute();
 }

@@ -11,10 +11,10 @@ $db = $database->getConnection();
 $query = "SELECT s.name, s.title, s.extension, s.room_number, s.created_at,
           d.department_name, d.extension as dept_extension, d.building, d.room_number as dept_room,
           u.username as added_by
-          FROM staff s 
-          JOIN departments d ON s.department_id = d.id 
+          FROM staff s
+          JOIN departments d ON s.department_id = d.id
           LEFT JOIN users u ON s.user_id = u.id
-          ORDER BY d.department_name, s.name";
+          ORDER BY d.department_name, s.is_department_head DESC, s.name";
 $stmt = $db->prepare($query);
 $stmt->execute();
 

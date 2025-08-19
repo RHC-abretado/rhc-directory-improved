@@ -70,13 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_id'])) {
         exit;
     }
     
-    $query = "UPDATE staff SET name = :name, title = :title, extension = :extension, room_number = :room_number 
+    $query = "UPDATE staff SET name = :name, title = :title, extension = :extension, room_number = :room_number, is_department_head = :is_department_head
               WHERE id = :id";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':name', $_POST['name']);
     $stmt->bindParam(':title', $_POST['title']);
     $stmt->bindParam(':extension', $_POST['extension']);
     $stmt->bindParam(':room_number', $_POST['room_number']);
+    $is_head = isset($_POST['is_department_head']) ? 1 : 0;
+    $stmt->bindParam(':is_department_head', $is_head, PDO::PARAM_INT);
     $stmt->bindParam(':id', $_POST['edit_id']);
     $stmt->execute();
     header('Location: manage_staff.php?msg=updated' . ($department_filter ? '&department_id=' . $department_filter : ''));
@@ -100,7 +102,7 @@ if ($department_filter) {
     $query_params = [$department_filter];
 }
 
-$staff_query .= " ORDER BY d.department_name, s.name";
+$staff_query .= " ORDER BY d.department_name, s.is_department_head DESC, s.name";
 
 $stmt = $db->prepare($staff_query);
 $stmt->execute($query_params);
@@ -236,6 +238,10 @@ include 'header.php';
                             <label class="form-label">Room Number</label>
                             <input type="text" class="form-control" name="room_number" id="edit_room_number">
                         </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="is_department_head" id="edit_is_department_head" value="1">
+                            <label class="form-check-label" for="edit_is_department_head">Dean/Director</label>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -278,6 +284,7 @@ function editStaff(id) {
             document.getElementById("edit_title").value = data.title;
             document.getElementById("edit_extension").value = data.extension || "";
             document.getElementById("edit_room_number").value = data.room_number || "";
+            document.getElementById("edit_is_department_head").checked = data.is_department_head == 1;
             new bootstrap.Modal(document.getElementById("editModal")).show();
         })
         .catch(error => {

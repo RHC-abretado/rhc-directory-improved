@@ -19,10 +19,10 @@ $departments_stmt->execute();
 $departments = $departments_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get all staff with department info, ordered by department then name
-$staff_query = "SELECT s.name, s.title, s.extension, s.room_number, d.department_name, d.extension as dept_extension
-                FROM staff s 
-                JOIN departments d ON s.department_id = d.id 
-                ORDER BY d.department_name, s.name";
+$staff_query = "SELECT s.name, s.title, s.extension, s.room_number, s.is_department_head, d.department_name, d.extension as dept_extension
+                FROM staff s
+                JOIN departments d ON s.department_id = d.id
+                ORDER BY d.department_name, s.is_department_head DESC, s.name";
 $staff_stmt = $db->prepare($staff_query);
 $staff_stmt->execute();
 $all_staff = $staff_stmt->fetchAll(PDO::FETCH_ASSOC);

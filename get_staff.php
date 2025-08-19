@@ -29,7 +29,8 @@ if (isset($_GET['id'])) {
                 'title' => $staff['title'],
                 'extension' => $staff['extension'],
                 'room_number' => $staff['room_number'],
-                'department_name' => $staff['department_name']
+                'department_name' => $staff['department_name'],
+                'is_department_head' => $staff['is_department_head']
             ];
             
             header('Content-Type: application/json');

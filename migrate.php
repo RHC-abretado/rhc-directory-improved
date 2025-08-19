@@ -78,6 +78,7 @@ class FixedDirectoryMigration {
                 email VARCHAR(255),
                 room_number VARCHAR(50),
                 building VARCHAR(100),
+                is_department_head TINYINT(1) DEFAULT 0,
                 display_name VARCHAR(255),
                 company_name VARCHAR(255) DEFAULT 'Rio Hondo College',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -245,10 +246,10 @@ class FixedDirectoryMigration {
             $deptMap[$cleaned] = $row['id'];
         }
         
-        $stmt = $this->pdo->prepare("
-            INSERT INTO staff (department_id, user_id, name, title, extension, phone, email, room_number, building, display_name, company_name) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO staff (department_id, user_id, name, title, extension, phone, email, room_number, building, is_department_head, display_name, company_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
         
         $migrated = 0;
         $skipped = 0;
@@ -274,6 +275,7 @@ class FixedDirectoryMigration {
                 $staff['email'] ?? null,
                 $staff['room_number'] ?? null,
                 $staff['building'] ?? null,
+                0,
                 $staff['display_name'] ?? $staff['name'],
                 $staff['company_name'] ?? 'Rio Hondo College'
             ]);

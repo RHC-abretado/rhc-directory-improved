@@ -31,7 +31,7 @@ if ($cachedData !== false && is_array($cachedData)) {
 
     $query = "SELECT s.*, d.department_name as department FROM staff s
               JOIN departments d ON s.department_id = d.id
-              ORDER BY d.department_name, s.name";
+              ORDER BY d.department_name, s.is_department_head DESC, s.name";
     $stmt = $db->prepare($query);
     $stmt->execute();
     $staff_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
