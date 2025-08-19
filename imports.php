@@ -30,18 +30,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     throw new Exception("Could not read the uploaded file.");
                 }
                 
-                // Read header row
-                $header = fgetcsv($handle);
-                
+                // Read header row and normalize it to lowercase with underscores
                 if ($import_type === 'departments') {
                     $expected_headers = ['department_name', 'extension', 'building', 'room_number'];
                 } else {
-                    $expected_headers = ['name', 'title', 'extension', 'room_number', 'department_name'];
+                    $expected_headers = ['name', 'title', 'extension', 'room_number', 'department', 'dept_extension', 'dept_building', 'dept_room'];
                 }
-                
-                if ($header !== $expected_headers) {
-                    throw new Exception("Invalid CSV format. Expected headers: " . implode(', ', $expected_headers));
-                }
+
+                // Find and validate header row; skip any metadata lines
+                do {
+                    $header_raw = fgetcsv($handle);
+                    if ($header_raw === false) {
+                        throw new Exception("Invalid CSV format. Expected headers: " . implode(', ', $expected_headers));
+                    }
+
+                    $header = array_map(function ($h) {
+                        return strtolower(str_replace(' ', '_', trim($h)));
+                    }, $header_raw);
+
+                    $header_to_check = array_slice($header, 0, count($expected_headers));
+                } while ($header_to_check !== $expected_headers);
                 
                 // Read data rows
                 $row_count = 0;
@@ -49,10 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 while (($row = fgetcsv($handle)) !== false) {
                     $total_rows++;
                     if ($row_count < 200) { // Limit preview to 200 rows
-                        if (count($row) === count($header)) {
-                            $data = array_combine($header, $row);
+                        if (count($row) >= count($header_to_check)) {
+                            $row = array_slice($row, 0, count($header_to_check));
+                            $data = array_combine($header_to_check, $row);
+                            // Map 'department' to 'department_name' for consistency
+                            if (isset($data['department'])) {
+                                $data['department_name'] = $data['department'];
+                                unset($data['department']);
+                            }
                             $data['row_number'] = $total_rows + 1; // +1 because of header
-                            
+
                             if ($import_type === 'departments') {
                                 // Check if department already exists
                                 $check_query = "SELECT id FROM departments WHERE department_name = :dept_name";
@@ -67,11 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 $dept_stmt->bindParam(':dept_name', $data['department_name']);
                                 $dept_stmt->execute();
                                 $dept_result = $dept_stmt->fetch(PDO::FETCH_ASSOC);
-                                
+
                                 if ($dept_result) {
                                     $data['department_id'] = $dept_result['id'];
                                     $data['department_exists'] = true;
-                                    
+
                                     // Check if staff member already exists
                                     $staff_query = "SELECT id FROM staff WHERE name = :name AND department_id = :dept_id";
                                     $staff_stmt = $db->prepare($staff_query);
@@ -84,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     $data['exists'] = false;
                                 }
                             }
-                            
+
                             $preview_data[] = $data;
                         }
                         $row_count++;
@@ -139,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error_count = 0;
             $errors = [];
             $row_number = 2; // Start at 2 because of header
+            $new_department_count = 0;
             
             while (($row = fgetcsv($handle)) !== false) {
                 if ($stored_import_type === 'departments') {
@@ -203,50 +218,76 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     }
                 } else {
                     // Staff import
-                    if (count($row) < 5) continue; // Skip incomplete rows
-                    
+                    if (count($row) < 8) continue; // Skip incomplete rows
+
                     try {
                         $staff = [
                             'name' => trim($row[0]),
                             'title' => trim($row[1]),
                             'extension' => trim($row[2]),
                             'room_number' => trim($row[3]),
-                            'department_name' => trim($row[4])
+                            'department_name' => trim($row[4]),
+                            'dept_extension' => trim($row[5]),
+                            'dept_building' => trim($row[6]),
+                            'dept_room' => trim($row[7])
                         ];
-                        
+
                         // Skip rows with empty name or department
                         if (empty($staff['name']) || empty($staff['department_name'])) {
                             $row_number++;
                             continue;
                         }
-                        
-                        // Get department ID
+
+                        // Get or create department
                         $dept_query = "SELECT id FROM departments WHERE department_name = :dept_name";
                         $dept_stmt = $db->prepare($dept_query);
                         $dept_stmt->bindParam(':dept_name', $staff['department_name']);
                         $dept_stmt->execute();
                         $dept_result = $dept_stmt->fetch(PDO::FETCH_ASSOC);
-                        
-                        if (!$dept_result) {
-                            $error_count++;
-                            $errors[] = "Row $row_number: Department '{$staff['department_name']}' not found";
-                            $row_number++;
-                            continue;
+
+                        if ($dept_result) {
+                            $department_id = $dept_result['id'];
+                            // Optionally update existing department
+                            if (isset($_POST['update_existing']) && $_POST['update_existing'] === '1') {
+                                $update_dept_query = "UPDATE departments SET
+                                                    extension = :extension,
+                                                    building = :building,
+                                                    room_number = :room_number,
+                                                    updated_at = CURRENT_TIMESTAMP
+                                                    WHERE id = :dept_id";
+                                $update_dept_stmt = $db->prepare($update_dept_query);
+                                $update_dept_stmt->bindParam(':extension', $staff['dept_extension']);
+                                $update_dept_stmt->bindParam(':building', $staff['dept_building']);
+                                $update_dept_stmt->bindParam(':room_number', $staff['dept_room']);
+                                $update_dept_stmt->bindParam(':dept_id', $department_id);
+                                $update_dept_stmt->execute();
+                            }
+                        } else {
+                            // Insert new department
+                            $insert_dept_query = "INSERT INTO departments (department_name, extension, building, room_number, created_by)
+                                                VALUES (:dept_name, :extension, :building, :room_number, :created_by)";
+                            $insert_dept_stmt = $db->prepare($insert_dept_query);
+                            $insert_dept_stmt->bindParam(':dept_name', $staff['department_name']);
+                            $insert_dept_stmt->bindParam(':extension', $staff['dept_extension']);
+                            $insert_dept_stmt->bindParam(':building', $staff['dept_building']);
+                            $insert_dept_stmt->bindParam(':room_number', $staff['dept_room']);
+                            $insert_dept_stmt->bindParam(':created_by', $_SESSION['user_id']);
+                            $insert_dept_stmt->execute();
+                            $department_id = $db->lastInsertId();
+                            $new_department_count++;
                         }
-                        
-                        $department_id = $dept_result['id'];
-                        
+
                         // Check if staff member exists
                         $check_query = "SELECT id FROM staff WHERE name = :name AND department_id = :dept_id";
                         $check_stmt = $db->prepare($check_query);
                         $check_stmt->bindParam(':name', $staff['name']);
                         $check_stmt->bindParam(':dept_id', $department_id);
                         $check_stmt->execute();
-                        
+
                         if ($check_stmt->rowCount() > 0) {
                             if (isset($_POST['update_existing']) && $_POST['update_existing'] === '1') {
                                 // Update existing staff member
-                                $update_query = "UPDATE staff SET 
+                                $update_query = "UPDATE staff SET
                                                 title = :title,
                                                 extension = :extension,
                                                 room_number = :room_number,
@@ -266,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             }
                         } else {
                             // Insert new staff member
-                            $insert_query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number) 
+                            $insert_query = "INSERT INTO staff (user_id, department_id, name, title, extension, room_number)
                                             VALUES (:user_id, :dept_id, :name, :title, :extension, :room_number)";
                             $insert_stmt = $db->prepare($insert_query);
                             $insert_stmt->bindParam(':user_id', $_SESSION['user_id']);
@@ -303,11 +344,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'updated' => $updated_count,
                 'skipped' => $skipped_count,
                 'errors' => $error_count,
-                'error_details' => $errors
+                'error_details' => $errors,
+                'departments_created' => $new_department_count
             ];
             
             $item_type = $stored_import_type === 'departments' ? 'departments' : 'staff members';
             $success = "Import completed! Imported: $imported_count, Updated: $updated_count, Skipped: $skipped_count, Errors: $error_count";
+            if ($stored_import_type === 'staff') {
+                $success .= ", Departments Created: $new_department_count";
+            }
             
         } catch (Exception $e) {
             $db->rollback();
@@ -354,12 +399,15 @@ include 'header.php';
                         <?php if (!empty($import_summary)): ?>
                             <div class="alert alert-info">
                                 <h6><i class="fas fa-info-circle"></i> Import Summary</h6>
-                                <?php $item_type = $_SESSION['import_type'] === 'departments' ? 'Departments' : 'Staff Members'; ?>
+                                <?php $item_type = $import_type === 'departments' ? 'Departments' : 'Staff Members'; ?>
                                 <ul class="mb-0">
                                     <li><strong>New <?php echo $item_type; ?> Added:</strong> <?php echo $import_summary['imported']; ?></li>
                                     <li><strong>Existing <?php echo $item_type; ?> Updated:</strong> <?php echo $import_summary['updated']; ?></li>
                                     <li><strong><?php echo $item_type; ?> Skipped:</strong> <?php echo $import_summary['skipped']; ?></li>
                                     <li><strong>Errors:</strong> <?php echo $import_summary['errors']; ?></li>
+                                    <?php if ($import_type === 'staff'): ?>
+                                        <li><strong>New Departments Created:</strong> <?php echo $import_summary['departments_created']; ?></li>
+                                    <?php endif; ?>
                                 </ul>
                                 <?php if (!empty($import_summary['error_details'])): ?>
                                     <div class="mt-2">
@@ -389,11 +437,14 @@ include 'header.php';
                                 <?php else: ?>
                                     <p>Your CSV file must contain the following columns in this exact order:</p>
                                     <ul>
-                                        <li><strong>name</strong> - Staff member's full name (required)</li>
-                                        <li><strong>title</strong> - Job title or position (required)</li>
-                                        <li><strong>extension</strong> - Phone extension (optional)</li>
-                                        <li><strong>room_number</strong> - Room number (optional)</li>
-                                        <li><strong>department_name</strong> - Department name (must match existing department)</li>
+                                        <li><strong>Name</strong> - Staff member's full name (required)</li>
+                                        <li><strong>Title</strong> - Job title or position (required)</li>
+                                        <li><strong>Extension</strong> - Phone extension (optional)</li>
+                                        <li><strong>Room Number</strong> - Room number (optional)</li>
+                                        <li><strong>Department</strong> - Department name (new department will be created if needed)</li>
+                                        <li><strong>Dept Extension</strong> - Department phone extension (optional)</li>
+                                        <li><strong>Dept Building</strong> - Building name or code (optional)</li>
+                                        <li><strong>Dept Room</strong> - Department room number (optional)</li>
                                     </ul>
                                 <?php endif; ?>
                                 <p class="mb-0">
@@ -447,7 +498,7 @@ include 'header.php';
                                 <?php if ($import_type === 'departments'): ?>
                                     <p>Departments marked as "Exists" already exist in the system.</p>
                                 <?php else: ?>
-                                    <p>Staff members marked as "Exists" already exist in the system. Items marked as "Dept Missing" cannot be imported.</p>
+                                    <p>Staff members marked as "Exists" already exist in the system. Rows marked as "Dept New" will create the department automatically.</p>
                                 <?php endif; ?>
                             </div>
 
@@ -480,15 +531,18 @@ include 'header.php';
                                                     <th>Extension</th>
                                                     <th>Room</th>
                                                     <th>Department</th>
+                                                    <th>Dept Extension</th>
+                                                    <th>Dept Building</th>
+                                                    <th>Dept Room</th>
                                                 <?php endif; ?>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($preview_data as $row): ?>
-                                            <tr class="<?php 
+                                            <tr class="<?php
                                                 if ($import_type === 'staff' && !$row['department_exists']) {
-                                                    echo 'table-danger';
+                                                    echo 'table-info';
                                                 } elseif ($row['exists']) {
                                                     echo 'table-warning';
                                                 }
@@ -505,10 +559,13 @@ include 'header.php';
                                                     <td><?php echo htmlspecialchars($row['extension']); ?></td>
                                                     <td><?php echo htmlspecialchars($row['room_number']); ?></td>
                                                     <td><?php echo htmlspecialchars($row['department_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['dept_extension']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['dept_building']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['dept_room']); ?></td>
                                                 <?php endif; ?>
                                                 <td>
                                                     <?php if ($import_type === 'staff' && !$row['department_exists']): ?>
-                                                        <span class="badge bg-danger">Dept Missing</span>
+                                                        <span class="badge bg-info text-dark">Dept New</span>
                                                     <?php elseif ($row['exists']): ?>
                                                         <span class="badge bg-warning text-dark">Exists</span>
                                                     <?php else: ?>
